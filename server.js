@@ -690,9 +690,15 @@ app.post("/api/calculate", async (req, res) => {
     }
 
     if (isLeadSyncConfigured()) {
-      const leadSyncResult = await syncLead(leadPayload);
-      leadSynced = leadSyncResult.synced;
-      leadSyncMessage = leadSyncResult.message;
+      try {
+        const leadSyncResult = await syncLead(leadPayload);
+        leadSynced = leadSyncResult.synced;
+        leadSyncMessage = leadSyncResult.message;
+      } catch (leadError) {
+        console.error("Lead sync failed:", leadError);
+        leadSynced = false;
+        leadSyncMessage = "Your report was delivered, but prospect list syncing did not complete.";
+      }
     } else {
       console.warn("Lead sync provider variables are missing or invalid. Skipping prospect sync.");
       leadSyncMessage = "Lead sync is not configured.";
@@ -715,6 +721,17 @@ app.post("/api/calculate", async (req, res) => {
     });
   } catch (error) {
     console.error("Calculation request failed:", error);
+
+    if (error && error.message && error.message.includes("Lead sync")) {
+      return res.status(200).json({
+        success: true,
+        emailSent: true,
+        emailMessage: "Your PDF report was emailed successfully.",
+        leadSynced: false,
+        leadSyncMessage: "Your report was delivered, but prospect list syncing did not complete."
+      });
+    }
+
     return res.status(500).json({
       error: "We couldn't send your report right now. Please try again in a moment."
     });
