@@ -116,39 +116,39 @@
 
             <div class="grid gap-5 md:grid-cols-2">
               <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Average customers per month</span>
-                <input type="number" min="0" name="averageCustomersPerMonth" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
+                <span class="mb-2 block text-sm font-medium text-slate-700">Total current customers</span>
+                <input type="number" min="0" name="totalCurrentCustomers" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
               </label>
               <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Average purchase value</span>
-                <input type="number" min="0" step="0.01" name="averagePurchaseValue" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
+                <span class="mb-2 block text-sm font-medium text-slate-700">Average order value</span>
+                <input type="number" min="0" step="0.01" name="averageOrderValue" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
               </label>
               <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Current repeat purchase rate %</span>
-                <input type="number" min="0" max="100" step="0.01" name="currentRepeatPurchaseRate" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
+                <span class="mb-2 block text-sm font-medium text-slate-700">Purchase frequency per year</span>
+                <input type="number" min="0" step="0.01" name="purchaseFrequencyPerYear" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
               </label>
               <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Retention improvement option</span>
-                <select name="retentionImprovement" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white">
-                  <option value="10">10%</option>
-                  <option value="20">20%</option>
-                  <option value="30">30%</option>
-                </select>
+                <span class="mb-2 block text-sm font-medium text-slate-700">Current retention rate %</span>
+                <input type="number" min="0" max="100" step="0.01" name="currentRetentionRate" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
               </label>
               <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Optional upsell price</span>
-                <input type="number" min="0" step="0.01" name="upsellPrice" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
+                <span class="mb-2 block text-sm font-medium text-slate-700">Projected retention rate %</span>
+                <input type="number" min="0" max="100" step="0.01" name="projectedRetentionRate" required class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
               </label>
               <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Optional upsell take-rate %</span>
-                <input type="number" min="0" max="100" step="0.01" name="upsellTakeRate" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
+                <span class="mb-2 block text-sm font-medium text-slate-700">Projected upsell %</span>
+                <input type="number" min="0" max="100" step="0.01" name="upsellPercent" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Projected cross-sell %</span>
+                <input type="number" min="0" max="100" step="0.01" name="crossSellPercent" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-primary focus:bg-white" />
               </label>
             </div>
 
             <div class="rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200">
               <p class="text-sm font-medium text-slate-700">What happens next</p>
               <p class="mt-2 text-sm leading-7 text-slate-600">
-                We’ll calculate your revenue opportunity, generate a premium PDF report, and email it directly to you before taking you to the next step.
+                We’ll project annual revenue from existing customers using your current retention, target retention, purchase frequency, and optional upsell and cross-sell growth assumptions.
               </p>
             </div>
 

@@ -136,6 +136,8 @@ LEAD_SYNC_WEBHOOK_URL=https://your-automation-or-crm-endpoint.com/webhook
 The backend calculates:
 
 - Current monthly revenue
+- Current yearly revenue
+- Projected yearly revenue
 - Extra monthly revenue from retention improvement
 - Extra yearly revenue
 - Extra monthly upsell revenue
@@ -144,11 +146,11 @@ The backend calculates:
 
 ### Formula notes
 
-- Current monthly revenue = `average customers per month * average purchase value * (1 + current repeat purchase rate)`
-- Extra retention revenue = `average customers per month * average purchase value * current repeat purchase rate * retention improvement`
-- Extra upsell revenue = `average customers per month * upsell price * upsell take-rate`
-- Total monthly opportunity = `extra retention revenue + extra upsell revenue`
-- Total yearly opportunity = `total monthly opportunity * 12`
+- Current yearly revenue = `current customers * current retention rate * average order value * purchase frequency`
+- Projected yearly revenue from retention = `current customers * projected retention rate * average order value * purchase frequency`
+- Projected yearly upsell and cross-sell revenue = `current customers * projected retention rate * average order value * (upsell % + cross-sell %) * purchase frequency`
+- Total yearly opportunity = `projected yearly revenue - current yearly revenue`
+- Total monthly opportunity = `total yearly opportunity / 12`
 
 ## Email delivery notes
 
@@ -181,12 +183,13 @@ Accepts:
   "email": "jane@example.com",
   "phone": "555-555-5555",
   "businessType": "Dental Clinic",
-  "averageCustomersPerMonth": 120,
-  "averagePurchaseValue": 250,
-  "currentRepeatPurchaseRate": 35,
-  "retentionImprovement": 20,
-  "upsellPrice": 75,
-  "upsellTakeRate": 15
+  "totalCurrentCustomers": 1200,
+  "averageOrderValue": 250,
+  "purchaseFrequencyPerYear": 3,
+  "currentRetentionRate": 35,
+  "projectedRetentionRate": 50,
+  "upsellPercent": 10,
+  "crossSellPercent": 5
 }
 ```
 

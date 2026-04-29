@@ -54,28 +54,43 @@ function getLeadSyncProvider() {
 }
 
 function calculateRevenue(data) {
-  const averageCustomersPerMonth = toNumber(data.averageCustomersPerMonth);
-  const averagePurchaseValue = toNumber(data.averagePurchaseValue);
-  const currentRepeatPurchaseRate = toNumber(data.currentRepeatPurchaseRate) / 100;
-  const retentionImprovement = toNumber(data.retentionImprovement) / 100;
-  const upsellPrice = Math.max(0, toNumber(data.upsellPrice) || 0);
-  const upsellTakeRate = Math.max(0, toNumber(data.upsellTakeRate) || 0) / 100;
+  const totalCurrentCustomers = toNumber(data.totalCurrentCustomers);
+  const averageOrderValue = toNumber(data.averageOrderValue);
+  const purchaseFrequencyPerYear = toNumber(data.purchaseFrequencyPerYear);
+  const currentRetentionRate = toNumber(data.currentRetentionRate) / 100;
+  const projectedRetentionRate = toNumber(data.projectedRetentionRate) / 100;
+  const upsellPercent = Math.max(0, toNumber(data.upsellPercent) || 0) / 100;
+  const crossSellPercent = Math.max(0, toNumber(data.crossSellPercent) || 0) / 100;
 
-  const currentMonthlyRevenue =
-    averageCustomersPerMonth * averagePurchaseValue * (1 + currentRepeatPurchaseRate);
-  const extraMonthlyRevenueFromRetention =
-    averageCustomersPerMonth *
-    averagePurchaseValue *
-    currentRepeatPurchaseRate *
-    retentionImprovement;
-  const extraYearlyRevenue = extraMonthlyRevenueFromRetention * 12;
-  const extraMonthlyUpsellRevenue =
-    averageCustomersPerMonth * upsellPrice * upsellTakeRate;
-  const totalMonthlyOpportunity =
-    extraMonthlyRevenueFromRetention + extraMonthlyUpsellRevenue;
-  const totalYearlyOpportunity = totalMonthlyOpportunity * 12;
+  const currentYearlyRevenue =
+    totalCurrentCustomers *
+    currentRetentionRate *
+    averageOrderValue *
+    purchaseFrequencyPerYear;
+  const projectedYearlyRevenueFromRetention =
+    totalCurrentCustomers *
+    projectedRetentionRate *
+    averageOrderValue *
+    purchaseFrequencyPerYear;
+  const projectedYearlyUpsellCrossSellRevenue =
+    totalCurrentCustomers *
+    projectedRetentionRate *
+    averageOrderValue *
+    (upsellPercent + crossSellPercent) *
+    purchaseFrequencyPerYear;
+  const projectedYearlyRevenue =
+    projectedYearlyRevenueFromRetention + projectedYearlyUpsellCrossSellRevenue;
+  const extraYearlyRevenue =
+    projectedYearlyRevenueFromRetention - currentYearlyRevenue;
+  const extraMonthlyRevenueFromRetention = extraYearlyRevenue / 12;
+  const extraMonthlyUpsellRevenue = projectedYearlyUpsellCrossSellRevenue / 12;
+  const totalYearlyOpportunity = projectedYearlyRevenue - currentYearlyRevenue;
+  const totalMonthlyOpportunity = totalYearlyOpportunity / 12;
+  const currentMonthlyRevenue = currentYearlyRevenue / 12;
 
   return {
+    currentYearlyRevenue,
+    projectedYearlyRevenue,
     currentMonthlyRevenue,
     extraMonthlyRevenueFromRetention,
     extraYearlyRevenue,
@@ -87,14 +102,17 @@ function calculateRevenue(data) {
 
 function buildAnalysis(data, results) {
   const businessName = sanitizeText(data.businessName);
-  const improvement = sanitizeText(data.retentionImprovement);
+  const currentRate = sanitizeText(data.currentRetentionRate);
+  const projectedRate = sanitizeText(data.projectedRetentionRate);
+  const upsellPercent = sanitizeText(data.upsellPercent);
+  const crossSellPercent = sanitizeText(data.crossSellPercent);
 
   return [
-    `${businessName} is already generating about ${formatCurrency(results.currentMonthlyRevenue)} per month from current customer activity.`,
-    `A ${improvement}% lift in repeat purchasing could add around ${formatCurrency(results.extraMonthlyRevenueFromRetention)} in monthly revenue without needing more new leads.`,
+    `${businessName} is currently generating about ${formatCurrency(results.currentYearlyRevenue)} per year from retained existing customers.`,
+    `Improving retention from ${currentRate}% to ${projectedRate}% could add around ${formatCurrency(results.extraMonthlyRevenueFromRetention)} per month before upsell or cross-sell effects.`,
     results.extraMonthlyUpsellRevenue > 0
-      ? `Adding a simple follow-up upsell offer could contribute another ${formatCurrency(results.extraMonthlyUpsellRevenue)} per month.`
-      : "There is also room to increase value per customer by introducing a simple upsell or cross-sell follow-up.",
+      ? `Adding projected upsell and cross-sell growth of ${upsellPercent || "0"}% and ${crossSellPercent || "0"}% could contribute another ${formatCurrency(results.extraMonthlyUpsellRevenue)} per month.`
+      : "There is additional room to increase customer value by introducing upsell and cross-sell follow-up.",
     `That brings the total revenue opportunity to about ${formatCurrency(results.totalYearlyOpportunity)} per year.`
   ];
 }
@@ -145,12 +163,15 @@ function buildLeadPayload(data, results) {
     email: data.email,
     phone: data.phone,
     businessType: data.businessType,
-    averageCustomersPerMonth: data.averageCustomersPerMonth,
-    averagePurchaseValue: data.averagePurchaseValue,
-    currentRepeatPurchaseRate: data.currentRepeatPurchaseRate,
-    retentionImprovement: data.retentionImprovement,
-    upsellPrice: data.upsellPrice,
-    upsellTakeRate: data.upsellTakeRate,
+    totalCurrentCustomers: data.totalCurrentCustomers,
+    averageOrderValue: data.averageOrderValue,
+    purchaseFrequencyPerYear: data.purchaseFrequencyPerYear,
+    currentRetentionRate: data.currentRetentionRate,
+    projectedRetentionRate: data.projectedRetentionRate,
+    upsellPercent: data.upsellPercent,
+    crossSellPercent: data.crossSellPercent,
+    currentYearlyRevenue: results.currentYearlyRevenue,
+    projectedYearlyRevenue: results.projectedYearlyRevenue,
     currentMonthlyRevenue: results.currentMonthlyRevenue,
     extraMonthlyRevenueFromRetention: results.extraMonthlyRevenueFromRetention,
     extraYearlyRevenue: results.extraYearlyRevenue,
@@ -182,7 +203,7 @@ function generatePdfBuffer(data, results) {
 
     const businessName = sanitizeText(data.businessName);
     const contactName = sanitizeText(data.contactName);
-    const improvement = sanitizeText(data.retentionImprovement);
+    const projectedRetentionRate = sanitizeText(data.projectedRetentionRate);
     const analysis = buildAnalysis(data, results);
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
@@ -277,12 +298,13 @@ function generatePdfBuffer(data, results) {
     drawMetricCard(margin, currentY, "Current Monthly Revenue", formatCurrency(results.currentMonthlyRevenue), colors.primary);
     drawMetricCard(margin + cardWidth + gutter, currentY, "Total Monthly Opportunity", formatCurrency(results.totalMonthlyOpportunity), colors.green);
     drawMetricCard(margin, currentY + cardHeight + gutter, "Extra Yearly Revenue", formatCurrency(results.totalYearlyOpportunity), colors.orange);
-    drawMetricCard(margin + cardWidth + gutter, currentY + cardHeight + gutter, "Retention Lift Selected", `${improvement}%`, colors.dark);
+    drawMetricCard(margin + cardWidth + gutter, currentY + cardHeight + gutter, "Projected Retention Rate", `${projectedRetentionRate}%`, colors.dark);
     currentY += cardHeight * 2 + gutter + sectionGap;
 
     drawPanel("Revenue Summary", [
       `Retention opportunity: ${formatCurrency(results.extraMonthlyRevenueFromRetention)} per month`,
       `Upsell opportunity: ${formatCurrency(results.extraMonthlyUpsellRevenue)} per month`,
+      `Projected yearly revenue: ${formatCurrency(results.projectedYearlyRevenue)}`,
       `Total yearly opportunity: ${formatCurrency(results.totalYearlyOpportunity)}`
     ]);
 
@@ -329,10 +351,11 @@ function validatePayload(body) {
   }
 
   const numericFields = [
-    "averageCustomersPerMonth",
-    "averagePurchaseValue",
-    "currentRepeatPurchaseRate",
-    "retentionImprovement"
+    "totalCurrentCustomers",
+    "averageOrderValue",
+    "purchaseFrequencyPerYear",
+    "currentRetentionRate",
+    "projectedRetentionRate"
   ];
 
   for (const field of numericFields) {
@@ -341,30 +364,41 @@ function validatePayload(body) {
     }
   }
 
-  const improvement = toNumber(body.retentionImprovement);
-  if (![10, 20, 30].includes(improvement)) {
-    return "Retention improvement must be 10%, 20%, or 30%.";
+  if (
+    toNumber(body.totalCurrentCustomers) < 0 ||
+    toNumber(body.averageOrderValue) < 0 ||
+    toNumber(body.purchaseFrequencyPerYear) < 0
+  ) {
+    return "Customer volume, order value, and purchase frequency must be zero or greater.";
   }
 
-  if (toNumber(body.averageCustomersPerMonth) < 0 || toNumber(body.averagePurchaseValue) < 0) {
-    return "Customer volume and purchase value must be zero or greater.";
+  const currentRetentionRate = toNumber(body.currentRetentionRate);
+  const projectedRetentionRate = toNumber(body.projectedRetentionRate);
+  if (currentRetentionRate < 0 || currentRetentionRate > 100) {
+    return "Current retention rate must be between 0 and 100.";
   }
 
-  const repeatRate = toNumber(body.currentRepeatPurchaseRate);
-  if (repeatRate < 0 || repeatRate > 100) {
-    return "Current repeat purchase rate must be between 0 and 100.";
+  if (projectedRetentionRate < 0 || projectedRetentionRate > 100) {
+    return "Projected retention rate must be between 0 and 100.";
   }
 
-  const upsellPrice = sanitizeText(body.upsellPrice);
-  if (upsellPrice && toNumber(upsellPrice) < 0) {
-    return "Upsell price must be zero or greater.";
+  if (projectedRetentionRate < currentRetentionRate) {
+    return "Projected retention rate should be equal to or higher than the current retention rate.";
   }
 
-  const upsellTakeRate = sanitizeText(body.upsellTakeRate);
-  if (upsellTakeRate) {
-    const value = toNumber(upsellTakeRate);
+  const upsellPercent = sanitizeText(body.upsellPercent);
+  if (upsellPercent) {
+    const value = toNumber(upsellPercent);
     if (!Number.isFinite(value) || value < 0 || value > 100) {
-      return "Upsell take-rate must be between 0 and 100.";
+      return "Upsell percent must be between 0 and 100.";
+    }
+  }
+
+  const crossSellPercent = sanitizeText(body.crossSellPercent);
+  if (crossSellPercent) {
+    const value = toNumber(crossSellPercent);
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      return "Cross-sell percent must be between 0 and 100.";
     }
   }
 
@@ -617,12 +651,13 @@ app.post("/api/calculate", async (req, res) => {
       email: sanitizeText(req.body.email),
       phone: sanitizeText(req.body.phone),
       businessType: sanitizeText(req.body.businessType),
-      averageCustomersPerMonth: toNumber(req.body.averageCustomersPerMonth),
-      averagePurchaseValue: toNumber(req.body.averagePurchaseValue),
-      currentRepeatPurchaseRate: toNumber(req.body.currentRepeatPurchaseRate),
-      retentionImprovement: toNumber(req.body.retentionImprovement),
-      upsellPrice: sanitizeText(req.body.upsellPrice) ? toNumber(req.body.upsellPrice) : 0,
-      upsellTakeRate: sanitizeText(req.body.upsellTakeRate) ? toNumber(req.body.upsellTakeRate) : 0
+      totalCurrentCustomers: toNumber(req.body.totalCurrentCustomers),
+      averageOrderValue: toNumber(req.body.averageOrderValue),
+      purchaseFrequencyPerYear: toNumber(req.body.purchaseFrequencyPerYear),
+      currentRetentionRate: toNumber(req.body.currentRetentionRate),
+      projectedRetentionRate: toNumber(req.body.projectedRetentionRate),
+      upsellPercent: sanitizeText(req.body.upsellPercent) ? toNumber(req.body.upsellPercent) : 0,
+      crossSellPercent: sanitizeText(req.body.crossSellPercent) ? toNumber(req.body.crossSellPercent) : 0
     };
 
     const results = calculateRevenue(cleanData);
